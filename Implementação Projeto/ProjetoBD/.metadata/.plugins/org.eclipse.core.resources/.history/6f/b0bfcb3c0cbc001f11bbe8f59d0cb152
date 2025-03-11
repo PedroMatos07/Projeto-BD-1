@@ -1,0 +1,277 @@
+package DAO;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.table.DefaultTableModel;
+
+import conexao.Conexao;
+
+public class Consultas {
+	
+    public DefaultTableModel query1(int clientId) {
+        String query = "SELECT se.servTipo " +
+                       "FROM servico as se, solicitam as s, pedido as p, cliente as c " +
+                       "WHERE s.idPedido = p.idPedido " +
+                       "AND se.idServico = s.idServico " +
+                       "AND p.idCliente = c.idCliente " +
+                       "AND c.idCliente = ? " +
+                       "AND MONTH(s.dataFim) = (MONTH(CURDATE()) - 1) " +
+                       "AND YEAR(s.dataFim) = YEAR(CURDATE())";
+
+        DefaultTableModel tableModel = new DefaultTableModel();
+        tableModel.addColumn("Tipo Serviço"); // Adicione as colunas
+        
+        PreparedStatement ps = null;
+        try {
+			ps = Conexao.getConexao().prepareStatement(query);
+            ps.setInt(1, clientId); // Substitui o parâmetro ? pelo clientId
+            ResultSet rs = ps.executeQuery();
+
+            // Preenche o modelo da tabela com os dados do ResultSet
+            while (rs.next()) {
+                tableModel.addRow(new Object[] { rs.getString("servTipo") });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tableModel;
+    }
+	
+	public DefaultTableModel query2(String nomeCidade, String estado) {
+		String query = "SELECT emp.nome " +
+                "FROM empresa as emp, oferecem as ofe, cidade as cid " +
+                "WHERE emp.idEmpresa = ofe.idEmpresa " +
+                "AND cid.idCidade = ofe.idCidade " +
+                "AND cid.nomeCidade = ? " +
+                "AND cid.estado = ? " +  
+                "GROUP BY emp.nome " +
+                "ORDER BY COUNT(ofe.idServico) DESC " +
+                "LIMIT 1;";
+
+        DefaultTableModel tableModel = new DefaultTableModel();
+        tableModel.addColumn("Nome Empresa"); // Adicione as colunas
+        
+        PreparedStatement ps = null;
+        try {
+			ps = Conexao.getConexao().prepareStatement(query);
+            ps.setString(1, nomeCidade);
+            ps.setString(2, estado);
+            ResultSet rs = ps.executeQuery();
+
+            // Preenche o modelo da tabela com os dados do ResultSet
+            while (rs.next()) {
+                tableModel.addRow(new Object[] { rs.getString("emp.nome") });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tableModel;
+	}
+	
+	public DefaultTableModel query3(int idCliente, String month, String year) {
+		String query = "SELECT DISTINCT func.nomeCompletoFunc " +
+                "FROM funcionario as func, solicitam as sol, pedido as ped,  cliente as cli, cidade as cid " +
+                "WHERE func.CPFfunc = sol.CPFfunc " +
+                "AND ped.idPedido = sol.idPedido " +
+                "AND cli.idCLiente = ped.idCliente " +
+                "AND cli.idCLiente = ? " +  
+                "AND MONTH(sol.dataFim) = ? " +
+                "AND YEAR(sol.dataFim) = ? ";
+	
+        DefaultTableModel tableModel = new DefaultTableModel();
+        tableModel.addColumn("Nome Funcionário"); // Adicione as colunas
+        
+        PreparedStatement ps = null;
+        try {
+			ps = Conexao.getConexao().prepareStatement(query);
+            ps.setInt(1, idCliente);
+            ps.setString(2, month);
+            ps.setString(3, year);
+            ResultSet rs = ps.executeQuery();
+
+            // Preenche o modelo da tabela com os dados do ResultSet
+            while (rs.next()) {
+                tableModel.addRow(new Object[] { rs.getString("func.nomeCompletoFunc") });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tableModel;
+	}
+	
+	public DefaultTableModel query4() {
+		String query = "SELECT ped.idPedido, cli.nomeCompleto, ped.enderecoPart, ped.enderecoDest, sol.preco " +
+                "FROM pedido as ped, cliente as cli, solicitam as sol " +
+                "WHERE sol.idPedido = ped.idPedido " +
+                "AND ped.idCliente = cli.idCliente " +
+                "AND YEAR(sol.dataFim) = YEAR(CURDATE()) - 1 ";
+	
+        DefaultTableModel tableModel = new DefaultTableModel();
+        tableModel.addColumn("idPedido");
+        tableModel.addColumn("nomeCliente");
+        tableModel.addColumn("enderecoPartida");
+        tableModel.addColumn("enderecoDestino");
+        tableModel.addColumn("precoTotal");
+        
+        PreparedStatement ps = null;
+        try {
+			ps = Conexao.getConexao().prepareStatement(query);
+            ResultSet rs = ps.executeQuery();
+
+            // Preenche o modelo da tabela com os dados do ResultSet
+            while (rs.next()) {
+                tableModel.addRow(new Object[] { rs.getInt("ped.idPedido"),  rs.getString("cli.nomeCompleto"), rs.getString("ped.enderecoPart"), rs.getString("ped.enderecoDest"), rs.getString("sol.preco")});
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tableModel;
+	}
+	
+	public DefaultTableModel query5(int year) {
+		String query = "SELECT emp.nome, MONTH(sol.dataFim) as mes, SUM(sol.preco) " +
+                "FROM empresa as emp, solicitam sol, pedido as ped " +
+                "WHERE sol.idPedido = ped.idPedido " +
+                "AND emp.idEmpresa = ped.idEmpresa " +
+                "AND YEAR(sol.dataFim) = ? " +
+				"GROUP BY emp.nome, MONTH(sol.dataFim) " +
+                "ORDER BY emp.nome ";
+	
+        DefaultTableModel tableModel = new DefaultTableModel();
+        tableModel.addColumn("nomeEmpresa");
+        tableModel.addColumn("mes");
+        tableModel.addColumn("Faturamento");
+        
+        PreparedStatement ps = null;
+        try {
+			ps = Conexao.getConexao().prepareStatement(query);
+            ps.setInt(1, year);
+			ResultSet rs = ps.executeQuery();
+
+            // Preenche o modelo da tabela com os dados do ResultSet
+            while (rs.next()) {
+                tableModel.addRow(new Object[] { rs.getString("emp.nome"),  rs.getInt("mes"), rs.getInt("SUM(sol.preco)")});
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tableModel;
+	}
+	
+	
+	public DefaultTableModel query6() {
+		String query = "SELECT serv.servTipo, COUNT(serv.servTipo) AS totalSolicitacoes " +
+                "FROM servico as serv, solicitam as sol " +
+                "WHERE serv.idServico = sol.idServico " +
+                "AND MONTH(sol.dataFim) = MONTH(CURDATE()) - 1 " +
+                "AND YEAR(sol.dataFim) = YEAR(CURDATE()) " +
+                "GROUP BY serv.servTipo " +
+                "ORDER BY totalSolicitacoes DESC " +
+				"LIMIT 1; ";
+	
+        DefaultTableModel tableModel = new DefaultTableModel();
+        tableModel.addColumn("servTipo");
+        
+        PreparedStatement ps = null;
+        try {
+			ps = Conexao.getConexao().prepareStatement(query);
+			ResultSet rs = ps.executeQuery();
+
+            // Preenche o modelo da tabela com os dados do ResultSet
+            while (rs.next()) {
+                tableModel.addRow(new Object[] { rs.getString("serv.servTipo")});
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tableModel;
+	}
+	
+	public DefaultTableModel query7() {
+		String sql1 = "SELECT se.nomeServ, COUNT(sol.idServico) AS numSolicitacoes " +
+	              "FROM servico AS se " +
+	              "JOIN solicitam AS sol ON se.idServico = sol.idServico " +
+	              "GROUP BY se.nomeServ " +
+	              "ORDER BY numSolicitacoes DESC " +
+	              "LIMIT 1;";
+		
+		String sql2 = "SELECT emp.nome, COUNT(sol.idServico) AS numSolicitacoes " +
+	              "FROM empresa AS emp " +
+	              "JOIN pedido AS ped ON emp.idEmpresa = ped.idEmpresa " +
+	              "JOIN solicitam AS sol ON ped.idPedido = sol.idPedido " +
+	              "GROUP BY emp.nome " +
+	              "ORDER BY numSolicitacoes DESC;";
+	
+        DefaultTableModel tableModel = new DefaultTableModel();
+        tableModel.addColumn("nomeServ");
+        tableModel.addColumn("numSolicitacoes");
+        
+        PreparedStatement ps = null;
+        try {
+			//ps = Conexao.getConexao().prepareStatement(query);
+			ResultSet rs = ps.executeQuery();
+
+            // Preenche o modelo da tabela com os dados do ResultSet
+            while (rs.next()) {
+                tableModel.addRow(new Object[] { rs.getString("serv.servTipo"), rs.getInt("numSolicitacoes")});
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tableModel;
+	}
+	
+	
+	public DefaultTableModel query8() {
+		String query = "SELECT cid.nomeCidade " +
+                "FROM cidade as cid, pedido AS ped " +
+                "WHERE ped.idCidade = cid.idCidade " +
+                "GROUP BY cid.nomeCidade " +
+                "ORDER BY COUNT(cid.idCidade) DESC " +
+				"LIMIT 1; ";
+	
+        DefaultTableModel tableModel = new DefaultTableModel();
+        tableModel.addColumn("nomeCidade");
+        
+        PreparedStatement ps = null;
+        try {
+			ps = Conexao.getConexao().prepareStatement(query);
+			ResultSet rs = ps.executeQuery();
+
+            // Preenche o modelo da tabela com os dados do ResultSet
+            while (rs.next()) {
+                tableModel.addRow(new Object[] { rs.getString("cid.nomeCidade")});
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tableModel;
+	}
+	
+	public DefaultTableModel query10() {
+		String query = "SELECT emp.nome, SUM(sol.preco) AS faturamento " +
+                "FROM solicitam AS sol, empresa AS emp, pedido AS ped " +
+                "WHERE sol.idPedido = ped.idPedido AND ped.idEmpresa = emp.idEmpresa " +
+                "GROUP BY emp.nome " +
+                "ORDER BY faturamento DESC ";
+	
+        DefaultTableModel tableModel = new DefaultTableModel();
+        tableModel.addColumn("nomeEmpresa");
+        tableModel.addColumn("faturamento");
+        
+        PreparedStatement ps = null;
+        try {
+			ps = Conexao.getConexao().prepareStatement(query);
+			ResultSet rs = ps.executeQuery();
+
+            // Preenche o modelo da tabela com os dados do ResultSet
+            while (rs.next()) {
+                tableModel.addRow(new Object[] { rs.getString("emp.nome"), rs.getInt("faturamento")});
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tableModel;
+	}
+}

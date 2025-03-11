@@ -1,0 +1,15 @@
+package ep;
+
+import DAO.Consultas;
+
+public class App {
+
+	public static void main(String[] args) {
+				
+		MenuScreen menu = new MenuScreen();
+		menu.showScreen();
+		
+		
+	}
+
+}
