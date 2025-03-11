@@ -55,7 +55,7 @@ Para executar a aplicação, siga os passos abaixo. Este é o processo que utili
    - A conexão é realizada usando o driver JDBC para o MySQL.
    - O banco de dados estará no **mesmo computador** em que a aplicação está sendo executada.
    - Na classe `Conexao`, o usuário (**user**) e a senha (**password**) devem ser definidos conforme as credenciais configuradas no seu SGBD MySQL.
-   ![Conexao BD](Imagens/bd.png)
+   ![Conexao BD](Imagens/conexao.png)
 
 
 3. **Preparação do Banco de Dados**
